@@ -16,7 +16,6 @@ const teacherSchema = new Schema({
         type: String,
         required: [true, "you must enter a password"],
         minlength: [4, "password must contain at least 4 characters"],
-        maxlength: [8, "password must contain less than 9 characters"],
     },
     class: {
         type: mongoose.Schema.Types.ObjectId,

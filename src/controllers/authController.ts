@@ -2,10 +2,11 @@ import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import classModel, { IClass } from "../models/classModel.js";
 import { isEmailUsedByUser, setTokenIfUserExists } from "../services/authService.js";
-import teacherModel from "../models/teacherModel.js";
+import teacherModel, { ITeacher } from "../models/teacherModel.js";
 import studentModel from "../models/studentModel.js";
 
-export async function registerForTeacher (req: Request, res: Response, next: NextFunction) {
+export async function registerForTeacher (req: Request, res: Response, next: NextFunction) : Promise<void> {
+    let classAdded = false;
     try {
         const name = req.body.name;
         const email = req.body.email;
@@ -21,14 +22,19 @@ export async function registerForTeacher (req: Request, res: Response, next: Nex
             return;
         }
 
-        const addedClass: IClass = await classModel.create(className);
+        const newClass = {
+            name: className
+        } as IClass;
+
+        const addedClass: IClass = await classModel.create(newClass);
+        classAdded = true;
 
         const newTeacher = {
             name,
             email,
             password,
             class: addedClass._id
-        }
+        } as ITeacher;
 
         const passwordHash = await bcrypt.hash(password, 10);
         newTeacher.password = passwordHash;
@@ -38,11 +44,14 @@ export async function registerForTeacher (req: Request, res: Response, next: Nex
 
     } 
     catch (error: any) {
+        if(classAdded){
+            await classModel.deleteOne({name: req.body.class});
+        }
         next(error);
     }
 }
 
-export async function registerForStudent (req: Request, res: Response, next: NextFunction) {
+export async function registerForStudent (req: Request, res: Response, next: NextFunction) : Promise<void> {
     try {
         const name = req.body.name;
         const email = req.body.email;
@@ -75,17 +84,22 @@ export async function registerForStudent (req: Request, res: Response, next: Nex
         newStudent.password = passwordHash;
     
         const addedStudent = await studentModel.create(newStudent);
-        res.status(201).json({student: addedStudent.class, success: true});
+        const updatedClass = await classModel.findByIdAndUpdate(classToJoin._id, {$push: {students: addedStudent}});
+        res.status(201).json({student: addedStudent, success: true});
     } 
     catch (error: any) {
         next(error);
     }
 }
 
-export async function login (req: Request, res: Response, next: NextFunction) {
+export async function login (req: Request, res: Response, next: NextFunction) : Promise<void> {
     try {
         const email = req.body.email;
         const password = req.body.password;
+        if(!email || !password){
+            res.status(400).json({message: "you have to enter your email and your password to log in"});
+            return;
+        }
 
         const token = await setTokenIfUserExists(email, password);
         if(!token){

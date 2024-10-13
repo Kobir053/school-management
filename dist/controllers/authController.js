@@ -14,6 +14,7 @@ import teacherModel from "../models/teacherModel.js";
 import studentModel from "../models/studentModel.js";
 export function registerForTeacher(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
+        let classAdded = false;
         try {
             const name = req.body.name;
             const email = req.body.email;
@@ -27,7 +28,11 @@ export function registerForTeacher(req, res, next) {
                 res.status(409).json({ message: "This email is already register" });
                 return;
             }
-            const addedClass = yield classModel.create(className);
+            const newClass = {
+                name: className
+            };
+            const addedClass = yield classModel.create(newClass);
+            classAdded = true;
             const newTeacher = {
                 name,
                 email,
@@ -40,6 +45,9 @@ export function registerForTeacher(req, res, next) {
             res.status(201).json({ classID: addedTeacher.class, success: true });
         }
         catch (error) {
+            if (classAdded) {
+                yield classModel.deleteOne({ name: req.body.class });
+            }
             next(error);
         }
     });
@@ -73,7 +81,8 @@ export function registerForStudent(req, res, next) {
             const passwordHash = yield bcrypt.hash(password, 10);
             newStudent.password = passwordHash;
             const addedStudent = yield studentModel.create(newStudent);
-            res.status(201).json({ student: addedStudent.class, success: true });
+            const updatedClass = yield classModel.findByIdAndUpdate(classToJoin._id, { $push: { students: addedStudent } });
+            res.status(201).json({ student: addedStudent, success: true });
         }
         catch (error) {
             next(error);
@@ -85,6 +94,10 @@ export function login(req, res, next) {
         try {
             const email = req.body.email;
             const password = req.body.password;
+            if (!email || !password) {
+                res.status(400).json({ message: "you have to enter your email and your password to log in" });
+                return;
+            }
             const token = yield setTokenIfUserExists(email, password);
             if (!token) {
                 res.status(404).json({ message: "this user didn't founded" });

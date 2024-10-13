@@ -9,7 +9,6 @@ const gradeSchema = new Schema({
     comment: {
         type: String,
         required: [true, "you have to write a comment to the student for his grade"],
-        maxlength: [50, "you allow to write a comment that its length is until 50 letters"],
     },
 });
 export default gradeSchema;
