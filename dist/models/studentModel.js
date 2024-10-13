@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import validator from "validator";
-const teacherSchema = new Schema({
+import gradeSchema from "./gradeModel.js";
+const studentSchema = new Schema({
     name: {
         type: String,
         required: [true, "you didn't entered your name"],
@@ -22,6 +23,10 @@ const teacherSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Class",
     },
+    grades: {
+        type: [gradeSchema],
+        default: [],
+    },
 });
-const teacherModel = mongoose.model("Teacher", teacherSchema);
-export default teacherModel;
+const studentModel = mongoose.model("Teacher", studentSchema);
+export default studentModel;
