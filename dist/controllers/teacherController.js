@@ -16,14 +16,14 @@ export function getGradesOfAllStudents(req, res, next) {
         try {
             const teacherToken = req.cookies["token"];
             let decoded = jwt.verify(teacherToken, JWT_SECRET);
-            const allGrades = yield teacherModel.findById(decoded.id).populate({ path: "class" });
-            if (!allGrades) {
+            const teacher = yield teacherModel.findById(decoded.id).populate({ path: "class" });
+            if (!teacher) {
                 res.status(404).json({ message: "couldn't find the grades of all students" });
                 return;
             }
             const studentsGrades = yield studentModel.aggregate([
                 {
-                    $match: { class: allGrades.class._id }
+                    $match: { class: teacher.class._id }
                 },
                 {
                     $project: {
@@ -71,6 +71,11 @@ export function editGradeForStudent(req, res, next) {
                 res.status(400).json({ message: "you have to enter a grade and a comment for the grade as well" });
                 return;
             }
+            const gradeId = req.params.gradeId;
+            if (!gradeId) {
+                res.status(400).json({ message: "to update the grade you have to enter the gradeID" });
+                return;
+            }
             const updatedGrade = {
                 grade,
                 comment
@@ -78,6 +83,58 @@ export function editGradeForStudent(req, res, next) {
             const studentId = req.params.id;
             const updatedStudent = yield studentModel.findByIdAndUpdate({ _id: studentId }, { $set: { grades: updatedGrade } }, { new: true });
             res.status(200).json({ updated: updatedStudent, success: true });
+        }
+        catch (error) {
+            next(error);
+        }
+    });
+}
+export function getGradeOfStudent(req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const studentId = req.params.id;
+            const student = yield studentModel.findById(studentId);
+            res.status(200).json({ grades: student.grades, success: true });
+        }
+        catch (error) {
+            next(error);
+        }
+    });
+}
+export function getAverageOfGradesOfStudents(req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const teacherToken = req.cookies["token"];
+            let decoded = jwt.verify(teacherToken, JWT_SECRET);
+            const teacher = yield teacherModel.findById(decoded.id).populate({ path: "class" });
+            if (!teacher) {
+                res.status(404).json({ message: "couldn't find the grades of all students" });
+                return;
+            }
+            const studentsGrades = yield studentModel.aggregate([
+                {
+                    $match: { class: teacher.class._id }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        name: 1,
+                        grades: { grade: 1 }
+                    }
+                }
+            ]);
+            let averageList = [];
+            let sum = 0;
+            let objOfStudent = {};
+            studentsGrades.forEach((obj) => {
+                obj.grades.forEach((grade) => {
+                    sum += grade.grade;
+                });
+                objOfStudent = { name: obj.name, average: sum / obj.grades.length };
+                averageList.push(objOfStudent);
+                sum = 0;
+            });
+            res.status(200).json({ averages: averageList, success: true });
         }
         catch (error) {
             next(error);

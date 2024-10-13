@@ -1,12 +1,12 @@
 import expess from "express";
-import { addGradeForStudent, getGradesOfAllStudents } from "../controllers/teacherController.js";
+import { addGradeForStudent, editGradeForStudent, getAverageOfGradesOfStudents, getGradeOfStudent, getGradesOfAllStudents } from "../controllers/teacherController.js";
 import { teacherGeneralMiddleware, teacherMiddlewareForSpecificStudent } from "../middlewares/teacherMiddleware.js";
 const router = expess.Router();
 router.route("/grades").get(teacherGeneralMiddleware, getGradesOfAllStudents);
-// router.route("/grades/average").get();
+router.route("/grades/average").get(getAverageOfGradesOfStudents);
 router.use(teacherMiddlewareForSpecificStudent);
 router.route("/grades/:id")
-    // .get()
+    .get(getGradeOfStudent)
     .post(addGradeForStudent);
-// .put();
+router.route("/grades/:id/:gradeId").put(editGradeForStudent);
 export default router;

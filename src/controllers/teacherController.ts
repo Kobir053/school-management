@@ -12,14 +12,16 @@ export async function getGradesOfAllStudents (req: Request, res: Response, next:
     try {
         const teacherToken = req.cookies["token"];
         let decoded = jwt.verify(teacherToken, JWT_SECRET) as {id: string, iat: number, exp: number};
-        const allGrades: ITeacher | null = await teacherModel.findById(decoded.id).populate({path: "class"});
-        if(!allGrades){
+
+        const teacher: ITeacher | null = await teacherModel.findById(decoded.id).populate({path: "class"});
+        if(!teacher){
             res.status(404).json({message: "couldn't find the grades of all students"});
             return;
         }
+
         const studentsGrades: IStudent[] = await studentModel.aggregate([
             {
-                $match: {class: allGrades.class._id}
+                $match: {class: teacher.class._id}
             },
             {
                 $project: {
@@ -68,6 +70,12 @@ export async function editGradeForStudent (req: Request, res: Response, next: Ne
             return;
         }
 
+        const gradeId = req.params.gradeId;
+        if(!gradeId){
+            res.status(400).json({message: "to update the grade you have to enter the gradeID"});
+            return;
+        }
+
         const updatedGrade = {
             grade,
             comment
@@ -76,6 +84,59 @@ export async function editGradeForStudent (req: Request, res: Response, next: Ne
         const studentId = req.params.id;
         const updatedStudent: IStudent | null = await studentModel.findByIdAndUpdate({_id: studentId}, {$set: {grades: updatedGrade}}, {new: true});
         res.status(200).json({updated: updatedStudent, success: true});
+    } 
+    catch (error: any) {
+        next(error);
+    }
+}
+
+export async function getGradeOfStudent (req: Request, res: Response, next: NextFunction) : Promise<void> {
+    try {
+        const studentId = req.params.id;
+        const student: IStudent | null = await studentModel.findById(studentId);
+        res.status(200).json({grades: student!.grades, success: true});
+    } 
+    catch (error: any) {
+        next(error);
+    }
+}
+
+export async function getAverageOfGradesOfStudents (req: Request, res: Response, next: NextFunction) : Promise<void> {
+    try {
+        const teacherToken = req.cookies["token"];
+        let decoded = jwt.verify(teacherToken, JWT_SECRET) as {id: string, iat: number, exp: number};
+
+        const teacher: ITeacher | null = await teacherModel.findById(decoded.id).populate({path: "class"});
+        if(!teacher){
+            res.status(404).json({message: "couldn't find the grades of all students"});
+            return;
+        }
+
+        const studentsGrades: IStudent[] = await studentModel.aggregate([
+            {
+                $match: {class: teacher.class._id}
+            },
+            {
+                $project: {
+                    _id: 0,
+                    name: 1,
+                    grades: {grade: 1} 
+                }
+            }
+        ]);
+        let averageList: object[] = [];
+        let sum = 0;
+        let objOfStudent = {};
+        studentsGrades.forEach((obj) => {
+            
+            obj.grades.forEach((grade) => {
+                sum += grade.grade;
+            });
+            objOfStudent = {name: obj.name, average: sum/obj.grades.length};
+            averageList.push(objOfStudent);
+            sum = 0;
+        })
+        res.status(200).json({averages: averageList, success: true});
     } 
     catch (error: any) {
         next(error);
