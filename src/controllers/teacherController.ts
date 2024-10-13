@@ -3,8 +3,6 @@ import jwt from "jsonwebtoken";
 import teacherModel, { ITeacher } from "../models/teacherModel.js";
 import { IGrade } from "../models/gradeModel.js";
 import studentModel, { IStudent } from "../models/studentModel.js";
-import { IClass } from "../models/classModel.js";
-import { populate } from "dotenv";
 
 const JWT_SECRET: string = process.env.JWT_SECRET || "my_secret_key";
 

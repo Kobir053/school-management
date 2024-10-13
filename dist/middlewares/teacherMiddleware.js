@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import jwt from "jsonwebtoken";
 import teacherModel from "../models/teacherModel.js";
 import studentModel from "../models/studentModel.js";
-import classModel from "../models/classModel.js";
 const JWT_SECRET = process.env.JWT_SECRET || "my_secret_key";
 export function teacherMiddlewareForSpecificStudent(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -37,9 +36,9 @@ export function teacherMiddlewareForSpecificStudent(req, res, next) {
                 res.status(404).json({ message: "there is no student with that id" });
                 return;
             }
-            const classOfTeacher = classModel.findById(teacher.class._id);
-            const classOfStudent = classModel.findById(student.class._id);
-            if (classOfStudent !== classOfTeacher) {
+            console.log(student.class._id);
+            console.log(teacher.class._id);
+            if (student.class._id != teacher.class._id) {
                 res.status(403).json({ message: "you don't have access to another classes details" });
                 return;
             }

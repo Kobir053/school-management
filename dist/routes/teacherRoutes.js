@@ -3,10 +3,9 @@ import { addGradeForStudent, editGradeForStudent, getAverageOfGradesOfStudents, 
 import { teacherGeneralMiddleware, teacherMiddlewareForSpecificStudent } from "../middlewares/teacherMiddleware.js";
 const router = expess.Router();
 router.route("/grades").get(teacherGeneralMiddleware, getGradesOfAllStudents);
-router.route("/grades/average").get(getAverageOfGradesOfStudents);
-router.use(teacherMiddlewareForSpecificStudent);
+router.route("/grades/average").get(teacherGeneralMiddleware, getAverageOfGradesOfStudents);
 router.route("/grades/:id")
-    .get(getGradeOfStudent)
-    .post(addGradeForStudent);
-router.route("/grades/:id/:gradeId").put(editGradeForStudent);
+    .get(teacherMiddlewareForSpecificStudent, getGradeOfStudent)
+    .post(teacherMiddlewareForSpecificStudent, addGradeForStudent);
+router.route("/grades/:id/:gradeId").put(teacherMiddlewareForSpecificStudent, editGradeForStudent);
 export default router;

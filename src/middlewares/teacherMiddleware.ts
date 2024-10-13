@@ -28,14 +28,15 @@ export async function teacherMiddlewareForSpecificStudent (req: Request, res: Re
             res.status(400).json({message: "you have to enter the id of the student"});
             return;
         }
+
         const student = await studentModel.findById(studentId);
         if(!student){
             res.status(404).json({message: "there is no student with that id"});
             return;
         }
-        const classOfTeacher = classModel.findById(teacher.class._id);
-        const classOfStudent = classModel.findById(student.class._id);
-        if(classOfStudent !== classOfTeacher){
+        console.log(student.class._id)
+        console.log(teacher.class._id)
+        if(student.class._id != teacher.class._id){
             res.status(403).json({message: "you don't have access to another classes details"});
             return;
         }
