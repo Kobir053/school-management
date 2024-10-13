@@ -8,3 +8,5 @@ router.route("/register-for-teacher").post(registerForTeacher);
 router.route("/register-for-student").post(registerForStudent);
 
 router.route("/login").post(login);
+
+export default router;

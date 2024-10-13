@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import connectDB from "./config/db.js";
 import errorHandler from "./middlewares/errorHandler.js";
+import authRouter from "./routes/authRoutes.js";
 
 dotenv.config();
 
@@ -14,6 +15,8 @@ app.use(cookieParser());
 connectDB();
 
 app.use(express.json());
+
+app.use("/auth", authRouter);
 
 app.use(errorHandler);
 
